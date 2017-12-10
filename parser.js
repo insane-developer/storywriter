@@ -6,11 +6,34 @@ module.exports = function parse(str) {
     chapters = chapters.map(function(chapter) {
         var commits = tokenize(/==([^=]+)==\n+/gm, chapter.text);
 
-        commits = commits.map(processCommits);
+        commits = commits.map(processCommit);
+
+        var branches = [],
+            branch = {
+                name: 'master',
+                commits: []
+            };
+
+        commits = commits.forEach(function (commit) {
+            if (commit.parent) {
+                if (branch) {
+                    branches.push(branch);
+                }
+                branch = {
+                    name: `${commit.title} branch`,
+                    parent: commit.parent,
+                    commits: []
+                }
+            }   
+            branch.commits.push(commit);
+        });
+        if (branch) {
+            branches.push(branch);
+        }
 
         return {
             title: chapter.token,
-            commits: commits
+            branches: branches
         };
 
     });
@@ -18,15 +41,14 @@ module.exports = function parse(str) {
     return chapters;
 };
 
-function processCommits(commit, i, commits) {
-    console.log('commit', commit);
+function processCommit(commit, i, commits) {
     var match = commit.text.match(/(?:<-([^\n]+)\n)?(\d\d:\d\d\s\d\d\.\d\d\.\d\d)\n+([\s\S]+)/m);
 
     return {
         title: commit.token,
         parent: match[1],
         time: match[2],
-        text: match[3]
+        text: match[3].trim()
     }
 };
 
@@ -34,9 +56,7 @@ function tokenize(re, str) {
     var matches = [],
         res = [];
 
-
     str.replace(re, function (match, token, index) {
-        console.log(token, index, index + match.length);
         matches.push({
             content: token,
             start: index,
