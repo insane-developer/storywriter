@@ -9,6 +9,7 @@ var Repo = module.exports = function (rootDir) {
     if (res.error) {
         throw res.error;
     }
+    this.commits = new Map();
     console.log('Init command:', res.toString('utf-8'));
 };
 
@@ -25,5 +26,10 @@ Repo.prototype = {
             cwd: this.root
         }));
         return this;
+    },
+    checkout: function (message) {
+        var hash = this.commits.get(message);
+
+        console.log(cp.execSync(`git checkout ${hash}`));
     }
 }

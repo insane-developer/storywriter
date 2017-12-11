@@ -9,10 +9,19 @@ var fs = require('fs'),
 story.forEach(chapter => {
     var writer = new Writer(`../catwalk/${chapter.title}`),
         branches = chapter.branches;
+branches.forEach(branch => {
+    if (branch.parent) {
+        writer.checkout(branch.parent);
+    }
 
+    writer.branch(branch.title);
+    branch.commits.forEach(commit => {
+        writer.writeStory(commit.text);
+        writer.commit(commit.title, commit.time);
+    });
+});
 
 });
 
 
 //console.log(JSON.stringify(, null, '  '));
-
